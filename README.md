@@ -18,6 +18,15 @@
 - We will provide a detailed taxonomy along with summaries for state-of-the-art algorithms.
 - We also plan to provide a perspective on the future trends and research challenges of deep learning in recommender systems
 
+
+### Reviewed SOTA's 
+
+- Supervised Learning
+  -  [Deep Variational Autoencoder with Shallow Parallel Path for Top-N Recommendation (VASP)](https://arxiv.org/pdf/2102.05774.pdf).
+- Self-Supervised Learning
+- Semi (Weak) Supervised Learning
+- Unsupervised Learning
+
 ### Project Plan: Tasks, Deadlines, Division of Work
 
 | # | Task Description	 | Task Owner | Deadline | Status |

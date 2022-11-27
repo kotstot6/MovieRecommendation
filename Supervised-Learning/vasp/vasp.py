@@ -10,8 +10,7 @@ from utils import *
 import tensorflow as tf
 import tensorflow_addons as tfa
 import tensorflow_ranking as tfr
-from matplotlib import pyplot as plt
-import pandas as pd
+
 set_seed(42)
 
 
@@ -36,7 +35,7 @@ class Sampling(tf.keras.layers.Layer):
         epsilon = tf.keras.backend.random_normal(shape=(batch, dim), stddev=1.)
         return z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
-class VASP(tf.keras.Model):
+class VASP(Model):
     class Model(tf.keras.Model):
         def __init__(self, num_words, latent=1024, hidden=1024, items_sampling=1.):
             """
@@ -173,17 +172,12 @@ class VASP(tf.keras.Model):
 
             return z_mean, z_log_var, z
 
-    def __init__(self, dataset):
-        super(VASP, self).__init__()
-        self.dataset = dataset
-        self.history = {} 
-    
     def create_model(self, latent=2048, hidden=4096, ease_items_sampling=1., summary=False):
         self.model = VASP.Model(self.dataset.num_words, latent, hidden, ease_items_sampling)
-        self.model(self.dataset.split.train_gen[0][0])
+        self.model(self.split.train_gen[0][0])
         if summary:
             self.model.summary()
-        #self.mc = MetricsCallback(self)
+        self.mc = MetricsCallback(self)
 
     def compile_model(self, lr=0.00002, fl_alpha=0.25, fl_gamma=2.0):
         """
@@ -194,17 +188,17 @@ class VASP(tf.keras.Model):
         self.model.compile(
             optimizer=tf.keras.optimizers.Nadam(lr),
             loss=lambda x, y: tfa.losses.sigmoid_focal_crossentropy(x, y, alpha=fl_alpha, gamma=fl_gamma),
-            metrics=[tf.keras.metrics.RootMeanSquaredError(name='root_mean_squared_error'), tfr.keras.metrics.NDCGMetric(topn=100), tfr.keras.metrics.RecallMetric(topn=20), tfr.keras.metrics.HitsMetric(topn=10), tf.keras.metrics.MeanAbsoluteError(name='mean_absolute_error')]
+            metrics=[tf.keras.metrics.RootMeanSquaredError(name='root_mean_squared_error'), tf.keras.metrics.MeanAbsoluteError(name='mean_absolute_error')]
+            #metrics=[tf.keras.metrics.RootMeanSquaredError(name='root_mean_squared_error'), tfr.keras.metrics.NDCGMetric(topn=100), tfr.keras.metrics.RecallMetric(topn=20), tfr.keras.metrics.HitsMetric(topn=10), tf.keras.metrics.MeanAbsoluteError(name='mean_absolute_error')]
         )
 
     def train_model(self, epochs=150):
-        run_history = self.model.fit(
-            self.dataset.split.train_gen,
-            validation_data=self.dataset.split.validation_gen,
+        self.model.fit(
+            self.split.train_gen,
+            validation_data=self.split.validation_gen,
             epochs=epochs,
-            #callbacks=[self.mc]
+            callbacks=[self.mc]
         )
-        self.history.update(run_history.history)
 
 
 # Now, we can load previously preprocessed dataset. We also load pre-defined train/test/validation split.
@@ -215,9 +209,9 @@ class VASP(tf.keras.Model):
 dataset = Data(d='', pruning='u5')
 dataset.splits = []
 dataset.create_splits(1, 10000, shuffle=False, generators=False)
-dataset.split.train_users = pd.read_json("../../data/train_users.json").userid.apply(str).to_frame()
-dataset.split.validation_users = pd.read_json("../../data/val_users.json").userid.apply(str).to_frame()
-dataset.split.test_users = pd.read_json("../../data/test_users.json").userid.apply(str).to_frame()
+dataset.split.train_users = pd.read_json("../data/train_users.json").userid.apply(str).to_frame()
+dataset.split.validation_users = pd.read_json("../data/val_users.json").userid.apply(str).to_frame()
+dataset.split.test_users = pd.read_json("../data/test_users.json").userid.apply(str).to_frame()
 dataset.split.generators()
 
 
@@ -230,14 +224,14 @@ dataset.split.generators()
 # In[4]:
 
 
-#m = VASP(dataset.split, name="VASP_ML20_1")
-m = VASP(dataset)
+m = VASP(dataset.split, name="VASP_ML20_1")
 m.create_model(latent=2048, hidden=4096, ease_items_sampling=0.33)
 m.model.summary()
 print("=" * 80)
-print("Train for 50 epochs with lr 0.00005")
+print("Train for 60 epochs with lr 0.00005")
 m.compile_model(lr=0.00005, fl_alpha=0.25, fl_gamma=2.0)
-m.train_model(50)
+m.train_model(40)
+'''
 print("=" * 80)
 print("Than train for 20 epochs with lr 0.00001")
 m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
@@ -246,23 +240,23 @@ print("=" * 80)
 print("Than train for 20 epochs with lr 0.000001")
 m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
 m.train_model(20)
+'''
+
 # Dataframe with the details of the training.
 
 # In[5]:
 
 
-#m.mc.get_history_df()
+m.mc.get_history_df()
 
-print(m.history.keys())
 
 # And the details of the training as a plot.
 
 # In[6]:
 
 
-#m.mc.plot_history()
-pd.DataFrame(m.history).plot(figsize=(10,12))
-plt.savefig('results.png')
+m.mc.plot_history()
+
 
 # For final evaluation we do 5-fold validation on the user's interaction history. We think that this is more objective measure than only hide sampled 20% of the user's interactions randomly.
 
@@ -274,22 +268,19 @@ plt.savefig('results.png')
 test_r20s = []
 test_r50s = []
 test_n100s = []
-test_hr20s = []
 
 for fold in range(1,6):
-    ev=Evaluator(m.dataset.split, method=str(fold)+'_20')
+    ev=Evaluator(m.split, method=str(fold)+'_20')
     ev.update(m.model)
 
     test_n100s.append(ev.get_ncdg(100))
     test_r20s.append(ev.get_recall(20))
     test_r50s.append(ev.get_recall(50))
-    test_hr20s.append(ev.get_hr(20))
 
 print("TEST SET (MEAN)")
 print("5-fold mean NCDG@100", round(sum(test_n100s) / len(test_n100s),3))
 print("5-fold mean Recall@20", round(sum(test_r20s) / len(test_r20s),3))
 print("5-fold mean Recall@50", round(sum(test_r50s) / len(test_r50s),3))
-print("5-fold mean HitRatio@20", round(sum(test_hr20s) / len(test_hr20s),3))
 
 
 # In[ ]:

@@ -594,4 +594,185 @@ class Evaluator:
         if not callable(c):
             c = getattr(m, "predict", None)
         pr = c(self.iv)
+        ppp = (1 - self.iv) * pr
+        ppp[:, 0] = 0
+        idx = bn.argpartition(-ppp, k, axis=1)
+        z = zip([set([self.split.master_data.toki.index_word[s] for s in a[:k]]) for a in idx], self.tpx_set)
+        r = [len(pred & true) / min(k, len(true)) for pred, true in z]
+        return sum(r) / len(r)
 
+
+# Model abstract class
+class Model:
+    """
+    Abstract model.
+
+    Subclassed model should implements create_model and train_model.
+
+    """
+
+    def __init__(self, split, name):
+        self.split = split
+        self.dataset = split.master_data
+        self.metrics = {
+            'Recall@5': {'k': 5, 'method': self.split.evaluator.get_recall, 'value': None},
+            'Recall@20': {'k': 20, 'method': self.split.evaluator.get_recall, 'value': None},
+            'Recall@50': {'k': 50, 'method': self.split.evaluator.get_recall, 'value': None},
+            'NCDG@100': {'k': 100, 'method': self.split.evaluator.get_ncdg, 'value': None},
+            'Coverage@5': {'k': 5, 'method': self.split.evaluator.get_coverage, 'value': None},
+            'Coverage@20': {'k': 20, 'method': self.split.evaluator.get_coverage, 'value': None},
+            'Coverage@50': {'k': 50, 'method': self.split.evaluator.get_coverage, 'value': None},
+            'Coverage@100': {'k': 100, 'method': self.split.evaluator.get_coverage, 'value': None},
+        }
+        self.name = name
+
+    def create_model(self):
+        """
+        Build Your own model here
+        """
+
+    def train_model(self):
+        """
+        Create your own training loop here
+        """
+
+    def evaluate_model(self):
+        self.split.evaluator.update(self.model)
+        for x in self.metrics.values():
+            x['value'] = x['method'](x['k'])
+
+    def print_metrics(self):
+        print("Model metrics:", end='')
+        for k, x in self.metrics.items():
+            print(k, end="=")
+            print(round(x['value'], 4), end=" ")
+        print()
+
+    def test_model(self):
+        e = self.split.test_evaluator
+        e.update(self.model)
+        print("Results for test set: Recall@20=", e.get_recall(20), ", Recall@50=", e.get_recall(50), ", NCDG@100=",
+              e.get_ncdg(100), sep="")
+        with open("seed_results_test.txt", "a") as myfile:
+            myfile.write("Results for test set: Recall@20=" + str(e.get_recall(20)) + ", Recall@50=" + str(
+                e.get_recall(50)) + ", NCDG@100=" + str(e.get_ncdg(100)) + "\n")
+
+    def test_model_val(self):
+        e = self.split.evaluator
+        e.update(self.model)
+        print("Results for validation set: Recall@20=", e.get_recall(20), ", Recall@50=", e.get_recall(50),
+              ", NCDG@100=",
+              e.get_ncdg(100), sep="")
+        with open("seed_results_val.txt", "a") as myfile:
+            myfile.write("Results for validation set: Recall@20=" + str(e.get_recall(20)) + ", Recall@50=" + str(
+                e.get_recall(50)) + ", NCDG@100=" + str(e.get_ncdg(100)) + "\n")
+
+
+# Tensorflow objects - Callbacks
+class MetricsCallback(tf.keras.callbacks.Callback):
+    """
+    Evaluate model in tf callback.
+    """
+
+    def __init__(self, rsmodel):
+        super(MetricsCallback, self).__init__()
+        self.epoch = 0
+        self.loss_metrics = dict()
+        self.eval_metrics = dict()
+        self.evaluate_loss_metrics = ['loss', 'val_loss']
+        self.rsmodel = rsmodel
+        self.best_ncdg100 = 0.
+        self.best_ncdg100_epoch = 0
+        self.best_recall20 = 0.
+        self.best_recall20_epoch = 0
+        self.best_recall50 = 0.
+        self.best_recall50_epoch = 0
+        self.tsne_df = pd.DataFrame(columns=["epoch", "tsne_coords"])
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.epoch += 1
+
+        self.loss_metrics[self.epoch] = dict()
+        self.eval_metrics[self.epoch] = dict()
+        # add metrics from logs
+        for x in self.evaluate_loss_metrics:
+            self.loss_metrics[self.epoch][x] = logs[x]
+        # add custom metrics
+        self.rsmodel.evaluate_model()
+        self.rsmodel.print_metrics()
+        for x in self.rsmodel.metrics.keys():
+            self.eval_metrics[self.epoch][x] = self.rsmodel.metrics[x]['value']
+        #self.ncdg_100_watch()
+        #self.recall20_watch()
+        #self.recall50_watch()
+        # self.get_history_df()
+        # self.calc_tsne()
+
+    def recall20_watch(self):
+        if self.eval_metrics[self.epoch]['Recall@20'] > self.best_recall20:
+            print("New best for Recall@20")
+            self.model.save_weights(self.rsmodel.name + "_best_recall_20/" + self.rsmodel.name)
+            self.best_recall20 = self.eval_metrics[self.epoch]['Recall@20']
+            self.best_recall20_epoch = self.epoch
+            with open(self.rsmodel.name + "_best_recall_20/" + "epoch.txt", "w") as text_file:
+                text_file.write(str(self.best_recall20_epoch))
+
+    def recall50_watch(self):
+        if self.eval_metrics[self.epoch]['Recall@50'] > self.best_recall50:
+            print("New best for Recall@50")
+            self.model.save_weights(self.rsmodel.name + "_best_recall_50/" + self.rsmodel.name)
+            self.best_recall50 = self.eval_metrics[self.epoch]['Recall@50']
+            self.best_recall50_epoch = self.epoch
+            with open(self.rsmodel.name + "_best_recall_50/" + "epoch.txt", "w") as text_file:
+                text_file.write(str(self.best_recall50_epoch))
+
+    def ncdg_100_watch(self):
+        if self.eval_metrics[self.epoch]['NCDG@100'] > self.best_ncdg100:
+            print("New best for NCDG@100")
+            self.model.save_weights(self.rsmodel.name + "_best_ncdg_100/" + self.rsmodel.name)
+            self.best_ncdg100 = self.eval_metrics[self.epoch]['NCDG@100']
+            self.best_ncdg100_epoch = self.epoch
+            with open(self.rsmodel.name + "_best_ncdg_100/" + "epoch.txt", "w") as text_file:
+                text_file.write(str(self.best_ncdg100_epoch))
+
+    def on_train_end(self, logs=None):
+        self.plot_history()
+
+    def get_history_df(self):
+
+        outt1 = {
+            'epochs': [x for x in self.rsmodel.mc.loss_metrics.keys()]
+        }
+
+        outt2 = {
+            'epochs': [x for x in self.rsmodel.mc.eval_metrics.keys()]
+        }
+
+        for k in self.loss_metrics[1].keys():
+            outt1[k] = [self.loss_metrics[x][k] for x in self.loss_metrics.keys()]
+
+        for k in self.eval_metrics[1].keys():
+            outt2[k] = [self.eval_metrics[x][k] for x in self.eval_metrics.keys()]
+
+        self.history_loss_df = pd.DataFrame(outt1)
+        self.history_loss_df.to_json(self.rsmodel.name + "_loss.json")
+
+        self.history_df = pd.DataFrame(outt2)
+        self.history_df.to_json(self.rsmodel.name + "_metrics.json")
+
+        return self.history_df
+
+    def plot_history(self):
+        return self.get_history_df().set_index(self.history_df.epochs, drop=True).iloc[:, 1:].plot(figsize=(20, 10))
+
+    def calc_tsne(self):
+        num_words = self.rsmodel.dataset.num_words
+        input_single_item_matrix = np.zeros((num_words, num_words))
+        np.fill_diagonal(input_single_item_matrix, 1.)
+        qqq = scale_d(self.model.predict(input_single_item_matrix)).numpy() * .99
+        np.fill_diagonal(qqq, 1.)
+        tsne_coordinates = TSNE(n_components=2, metric="precomputed", angle=0.5, perplexity=30, random_state=6).fit(
+            (1 - qqq))
+        tsne_coordinates = tsne_coordinates.embedding_
+        self.tsne_df.loc[self.epoch] = [self.epoch, tsne_coordinates]
+        self.tsne_df.to_json(self.rsmodel.name + "_tsne.json")

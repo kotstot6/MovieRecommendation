@@ -35,18 +35,18 @@
 | 2 |	Project Proposal | Everyone |	12-Oct |	Completed |
 | 3 | Brainstorm the taxonomy for the survey | Everyone |	25-Oct |	Completed |
 | 4 | Understanding of the selected SOTA for Supervised Learning |	Chinmay Bhale |	25-Oct | Completed |
-| 5	| Implement the selected SOTA for Supervised Learning	| Chinmay Bhale |	15-Nov |	In-Progress |
+| 5	| Implement the selected SOTA for Supervised Learning	| Chinmay Bhale |	15-Nov |	Completed |
 | 6	| Understanding of the selected SOTA for Supervised Learning |	Kritshekhar Jha |	25-Oct |	Completed |
-| 7	| Implement the selected SOTA for Supervised Learning	| Kritshekhar Jha |	15-Nov |	In-Progress |
+| 7	| Implement the selected SOTA for Supervised Learning	| Kritshekhar Jha |	15-Nov |	Completed |
 | 8	| Understanding of the selected SOTA for Self Supervised Learning	| Paras Sheth	| 25-Oct |	Completed |
-| 9	| Implement the selected SOTA for Self Supervised Learning |	Paras Sheth	| 15-Nov |	In-Progress |
+| 9	| Implement the selected SOTA for Self Supervised Learning |	Paras Sheth	| 15-Nov |	Completed |
 | 10 |	Understanding of the selected SOTA for Semi Supervised Learning	|Tharindu Kumarage | 25-Oct |	Completed |
-| 11 |	Implement the selected SOTA for Semi Supervised Learning |	Tharindu Kumarage	| 15-Nov |	In-Progress |
+| 11 |	Implement the selected SOTA for Semi Supervised Learning |	Tharindu Kumarage	| 15-Nov |	Completed |
 | 12 |	Understanding of the selected SOTA for Unsupervised Learning |	Truxten Cook	| 25-Oct |	Completed |
-| 13 |	Implement the selected SOTA for Unsupervised Learning | Truxten Cook |	15-Nov |	In-Progress |
+| 13 |	Implement the selected SOTA for Unsupervised Learning | Truxten Cook |	15-Nov |	Completed |
 | 14 |	Understanding of the selected SOTA for Unsupervised Learning | Kyle Otsot |	25-Oct |	Completed |
-| 15 |	Implement the selected SOTA for Unsupervised Learning |	Kyle Otsot |	15-Nov |	In-Progress |
-| 16 |	Comparative analysis & discussion |	Everyone |	20-Nov |	In-Progress |
+| 15 |	Implement the selected SOTA for Unsupervised Learning |	Kyle Otsot |	15-Nov |	Completed |
+| 16 |	Comparative analysis & discussion |	Everyone |	20-Nov |	Completed |
 | 17 |	Project Presentation | Everyone |	14-Nov |	Completed |
 | 18 |	Group Demo | Everyone |	30-Nov |	Pending |
 | 19 |	Final Report	| Everyone	| 2-Dec	| Pending |

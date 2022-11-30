@@ -24,7 +24,9 @@
 - Supervised Learning
   -  [Deep Variational Autoencoder with Shallow Parallel Path for Top-N Recommendation (VASP)](https://arxiv.org/pdf/2102.05774.pdf).
 - Self-Supervised Learning
+  -  [Bootstrapping User and Item Representations for One-Class Collaborative Filtering (BUIR)](https://arxiv.org/abs/2105.06323).
 - Semi (Weak) Supervised Learning
+  -  [MeLU: Meta-Learned User Preference Estimator for Cold-Start Recommendation](https://arxiv.org/abs/1908.00413).
 - Unsupervised Learning
 
 ### Project Plan: Tasks, Deadlines, Division of Work

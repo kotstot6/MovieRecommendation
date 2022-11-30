@@ -23,6 +23,7 @@
 
 - Supervised Learning
   -  [Deep Variational Autoencoder with Shallow Parallel Path for Top-N Recommendation (VASP)](https://arxiv.org/pdf/2102.05774.pdf).
+  -  [Inductive Matrix Completion Using Graph Autoencoder](https://arxiv.org/abs/2108.11124).
 - Self-Supervised Learning
   -  [Bootstrapping User and Item Representations for One-Class Collaborative Filtering (BUIR)](https://arxiv.org/abs/2105.06323).
 - Semi (Weak) Supervised Learning

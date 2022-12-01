@@ -51,6 +51,6 @@
 | 15 |	Implement the selected SOTA for Unsupervised Learning |	Kyle Otsot |	15-Nov |	Completed |
 | 16 |	Comparative analysis & discussion |	Everyone |	20-Nov |	Completed |
 | 17 |	Project Presentation | Everyone |	14-Nov |	Completed |
-| 18 |	Group Demo | Everyone |	30-Nov |	Pending |
-| 19 |	Final Report	| Everyone	| 2-Dec	| Pending |
+| 18 |	Group Demo | Everyone |	30-Nov |	Completed |
+| 19 |	Final Report	| Everyone	| 2-Dec	| Completed |
 
